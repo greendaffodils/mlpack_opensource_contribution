@@ -1,0 +1,5 @@
+# tiny classifier example
+linear 2 8
+relu
+linear 8 2
+logsoftmax
