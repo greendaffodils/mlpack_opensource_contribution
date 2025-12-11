@@ -23,28 +23,26 @@ Folder Structure
 -----------------------------------------------------
 
 gsoc_proj/
-│
-├── cfg/
-│   └── model.txt            (architecture file)
-│
-├── data/
-│   ├── train.csv            (training data)
-│   └── label.csv            (labels)
-│
-├── src/
-│   ├── arch_parser.{hpp,cpp}
-│   ├── build_model.{hpp,cpp}
-│   ├── trainer.{hpp,cpp}
-│   ├── ann_cli.cpp
-│   └── train_config.hpp
-│
-├── test/
-│   ├── test_parse.cpp
-│   ├── test_build.cpp
-│   └── test_train.cpp
-│
+gsoc_proj
+├── cfg
+│ └── model.txt
+├── data
+│ ├── train.csv
+│ └── label.csv
+├── src
+│ ├── arch_parser.hpp
+│ ├── arch_parser.cpp
+│ ├── build_model.hpp
+│ ├── build_model.cpp
+│ ├── trainer.hpp
+│ ├── trainer.cpp
+│ ├── ann_cli.cpp
+│ └── train_config.hpp
+├── test
+│ ├── test_parse.cpp
+│ ├── test_build.cpp
+│ └── test_train.cpp
 └── CMakeLists.txt
-
 
 
 
