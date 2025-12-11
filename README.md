@@ -1,105 +1,89 @@
-📦 ANN CLI Builder for mlpack (v3.4.2)
+ANN CLI Builder for mlpack (v3.4.2)
+====================================
 
 A lightweight, extensible command-line tool to define, build, train, and evaluate neural networks using mlpack.
 
-🔍 Overview
+-----------------------------------------------------
+Overview
+-----------------------------------------------------
 
 This project implements a simple, text-based configuration system and CLI that allows users to:
 
-Define neural network architectures in a human-readable .txt format
+• Define neural network architectures in a human-readable .txt format  
+• Parse these architectures into layer specifications  
+• Automatically construct mlpack ANN models  
+• Train these models on CSV datasets  
+• Save trained models  
+• Predict using trained models via CLI  
 
-Parse these architectures into layer specifications
+This project is part of a future GSoC contribution idea for mlpack.
 
-Automatically construct mlpack ANN models from those specifications
+-----------------------------------------------------
+Folder Structure
+-----------------------------------------------------
 
-Train these models on provided datasets
-
-Save trained models for later inference
-
-Run inference (predictions) from the command line
-
-This tool is inspired by discussions with mlpack maintainers and mirrors the direction of “architecture parsing + ANN CLI” needed for future GSoC contributions.
-
-🧠 Motivation
-
-mlpack is a fast and flexible machine-learning library in C++.
-However:
-
-ANN model construction requires manual C++ coding.
-
-No built-in CLI exists for building arbitrary neural networks from a config file.
-
-ANN tutorials require writing full code even for simple experiments.
-
-This project solves these issues by introducing:
-
-✔ A tiny architecture language
-✔ A parser
-✔ A model builder
-✔ A training CLI
-
-Together, they form the foundation for a future generalized ANN CLI within mlpack.
-
-📁 Project Structure
 gsoc_proj/
 │
 ├── cfg/
-│   └── model.txt            # Architecture file
+│   └── model.txt            (architecture file)
 │
 ├── data/
-│   ├── train.csv            # Training inputs (features)
-│   └── label.csv            # Labels (integer classes)
+│   ├── train.csv            (training data)
+│   └── label.csv            (labels)
 │
 ├── src/
-│   ├── arch_parser.hpp
-│   ├── arch_parser.cpp      # Parses architecture file
-│   ├── build_model.hpp
-│   ├── build_model.cpp      # Builds mlpack ANN model
-│   ├── trainer.hpp
-│   ├── trainer.cpp          # Handles training logic
-│   ├── ann_cli.cpp          # Final CLI executable
-│   └── train_config.hpp     # Holds user configuration
+│   ├── arch_parser.{hpp,cpp}
+│   ├── build_model.{hpp,cpp}
+│   ├── trainer.{hpp,cpp}
+│   ├── ann_cli.cpp
+│   └── train_config.hpp
 │
 ├── test/
-│   ├── test_parse.cpp       # Unit test for parser
-│   ├── test_build.cpp       # Unit test for model builder
-│   └── test_train.cpp       # Lightweight training test
+│   ├── test_parse.cpp
+│   ├── test_build.cpp
+│   └── test_train.cpp
 │
-└── CMakeLists.txt           # Modern CMake project setup
+└── CMakeLists.txt
 
-🏗 Architecture File Format
+-----------------------------------------------------
+Architecture Config File Format
+-----------------------------------------------------
 
-The ANN architecture is defined using a simple, line-based language:
+The ANN architecture is defined using a simple line-based syntax.
 
-Example — cfg/model.txt:
+Example (cfg/model.txt):
 
-# Tiny classifier example
+# Tiny classifier
 linear 2 8
 relu
 linear 8 2
 logsoftmax
 
+Supported layer keywords:
+linear <in> <out>
+relu
+sigmoid
+tanh
+logsoftmax
 
-Supported layers:
+-----------------------------------------------------
+Build Instructions
+-----------------------------------------------------
 
-Layer	Syntax	Notes
-Linear	linear <in> <out>	Fully connected
-ReLU	relu	Activation
-Sigmoid	sigmoid	Activation
-Tanh	tanh	Activation
-LogSoftmax	logsoftmax	Output layer for classification
-⚙️ Build Instructions
-1. Configure CMake project:
 mkdir build
 cd build
 cmake ..
 make -j4
 
-Output binary:
+The built CLI binary appears as:
 build/ann_cli
 
-🚀 Usage
-Train a model
+-----------------------------------------------------
+Training a Model
+-----------------------------------------------------
+
+Run:
+
 ./ann_cli --mode train \
   --cfg ../cfg/model.txt \
   --train ../data/train.csv \
@@ -109,118 +93,88 @@ Train a model
   --stepsize 0.01 \
   --save trained.bin
 
-Options
-Flag	Meaning
---mode train	Training mode
---cfg	Path to architecture file
---train	Training data (CSV)
---labels	Label file (CSV, single row)
---epochs	Number of passes
---batchsize	Minibatch size
---stepsize	Learning rate
---save	Output model name
-Run inference
+Parameter meaning:
+--mode train         : training mode
+--cfg                : architecture file
+--train              : CSV input features
+--labels             : CSV labels (single column or row)
+--epochs             : training epochs
+--batchsize          : mini-batch size
+--stepsize           : learning rate
+--save               : output trained model
+
+-----------------------------------------------------
+Prediction Mode
+-----------------------------------------------------
+
 ./ann_cli --mode predict \
   --load trained.bin \
   --input ../data/test.csv \
   --output preds.csv
 
-🧪 Testing
+-----------------------------------------------------
+Tests
+-----------------------------------------------------
+
 Parser test:
 ./test_parse
 
-Model building test:
+Model builder test:
 ./test_build
 
-Training logic test:
+Training test:
 ./test_train
 
-🧩 Design Highlights
-1. Architecture Parser
+-----------------------------------------------------
+Design Components
+-----------------------------------------------------
 
-Minimal tokenizer
+1) Architecture Parser
+   - Reads cfg/model.txt
+   - Supports comments (#)
+   - Produces vector<LayerSpec>
 
-Ignores comments and whitespace
+2) Model Builder
+   - Uses mlpack 3.4.2 ANN API
+   - Adds layers using model.Add(new LayerType<>);
 
-Validates parameters
+3) Trainer
+   - Loads CSV training data
+   - Converts labels → Row<size_t>
+   - Uses SGD or Adam optimizers
+   - Saves model using data::Save
 
-Produces a std::vector<LayerSpec>
+4) CLI (ann_cli.cpp)
+   - Dispatches based on mode: train or predict
+   - Reads configurations from command line
 
-2. Model Builder
+-----------------------------------------------------
+Why mlpack v3.4.2?
+-----------------------------------------------------
 
-Uses mlpack v3.4.2 ANN API:
+mlpack 4.x removed the ANN module (FFN, Linear, ReLU, etc.)
+ANN code exists only in mlpack 3.x.
 
-FFN<NegativeLogLikelihood<>, RandomInitialization> model;
-model.Add(new Linear<>(...));
-model.Add(new ReLULayer<>());
-model.Add(new LogSoftMax<>());
+Because this project uses ANN functionality, mlpack v3.4.2 is the correct version.
 
-3. Trainer
+-----------------------------------------------------
+Future Extensions
+-----------------------------------------------------
 
-Handles:
+• Add YAML config support  
+• Add convolution, dropout, batchnorm layers  
+• Add metrics such as accuracy, F1-score  
+• Allow ONNX export  
+• Evaluate against mlpack maintainers' upcoming refactor  
 
-Dataset loading
+-----------------------------------------------------
+License
+-----------------------------------------------------
 
-Label conversion → Row<size_t>
+MIT License (or any preferred license)
 
-Optimizer selection (SGD, Adam)
+-----------------------------------------------------
+Contributing
+-----------------------------------------------------
 
-Training loop
-
-Saving model via mlpack data::Save
-
-4. ANN CLI
-
-Command-line utility wrapping everything:
-
-Train
-
-Predict
-
-Load/Save model
-
-🔧 Why mlpack v3.4.2?
-
-mlpack 4.x removed:
-
-ANN layers in C++
-
-FFN class
-
-The entire ANN module
-
-Thus, ANN code only exists in 3.x versions.
-
-This project targets ANN support, therefore mlpack v3.4.2 is the correct and stable base.
-
-⭐ Future Work
-
-Add YAML config loader
-
-Add more layers (Dropout, BatchNorm, Convolution)
-
-Implement evaluation metrics (accuracy, F1 score)
-
-Export models to ONNX
-
-Integrate callbacks from ensmallen
-
-Submit upstream to mlpack as GSoC proposal foundation
-
-🤝 Contributing
-
-Pull requests are welcome!
-
-You can open issues for:
-
-New layer support
-
-CLI improvements
-
-Documentation fixes
-
-Performance optimizations
-
-📜 License
-
-MIT License (or whatever you choose).
+Pull requests and issues are welcome.
